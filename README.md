@@ -407,3 +407,7 @@ respective jurisdictions. Use at your own risk.
 3. Submit a pull request.
 4. Do NOT include geographic or identifying information.
 5. All code must be in English.
+
+![Guide 1](guide1.jpg)
+![Guide 2](guide2.jpg)
+![Tokenomics](tokenomics.jpg)
