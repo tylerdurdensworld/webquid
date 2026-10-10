@@ -1,0 +1,560 @@
+/* Self-hosted fonts - zero third-party requests, zero IP leaks.
+   EVERY face is bundled from src/assets with a RELATIVE url: Vite hashes
+   the files and rewrites the urls correctly under any deploy base. Absolute
+   /fonts/* urls 404 on GitHub Pages project subpaths (site lives under
+   /REPO/) - that was the "system font at start" root cause: on the deployed
+   site the faces NEVER loaded. font-display: block on every face, never
+   swap: this UI is 100% terminal text, so painting a system font for a few
+   frames and then reflowing into the phosphor face is the worst of both
+   worlds. The render-blocking CSS fetches the faces before first paint, so
+   the block window is one same-origin fetch - milliseconds, not the 3 s
+   worst case. */
+@font-face {
+  font-family: "VT323";
+  src: url("./assets/fonts/vt323-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+/* The ASCII wordmark's coverage font: the bundled Plex Mono subset has NO
+   box-drawing/block glyphs, so every block and corner glyph fell back to
+   whatever the OS offered - aligned on most desktops, broken on many mobile
+   browsers. Noto Sans Mono (subset: ASCII + box drawing + block elements)
+   covers them all and leads the .ascii stack, so the art always renders in
+   ONE font with ONE advance width. Served from public/ so index.html can
+   preload it (a hashed src/assets URL is unknowable at HTML-authoring time). */
+@font-face {
+  font-family: "Noto Sans Mono";
+  src: url("./assets/fonts/noto-sans-mono-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("./assets/fonts/plex-mono-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("./assets/fonts/plex-mono-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("./assets/fonts/plex-mono-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("./assets/fonts/plex-mono-700.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =======================================================================
+   WEBQUID/OS - 1984 terminal theme. Pure phosphor white on black glass.
+   ======================================================================= */
+
+@layer base {
+  :root {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 92%;
+    --card: 0 0% 0%;
+    --card-foreground: 0 0% 92%;
+    --popover: 0 0% 0%;
+    --popover-foreground: 0 0% 92%;
+    --primary: 0 0% 92%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 8%;
+    --secondary-foreground: 0 0% 92%;
+    --muted: 0 0% 8%;
+    --muted-foreground: 0 0% 55%;
+    --accent: 0 0% 14%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 0% 80%;
+    --destructive-foreground: 0 0% 0%;
+    --border: 0 0% 28%;
+    --input: 0 0% 28%;
+    --ring: 0 0% 80%;
+    --radius: 0px;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  html {
+    background: #000;
+    scrollbar-color: #444 #000;
+    /* Mobile pinch-zoom-out pan killer: some mobile browsers let the whole
+       page slide sideways during/after a pinch, revealing a blank strip on
+       the right. The root never scrolls horizontally, so forbid it
+       outright. `hidden` is the legacy fallback; `clip` wins where
+       supported because - unlike hidden - it creates no scroll container,
+       so the sticky topbar keeps sticking. */
+    overflow-x: hidden;
+    overscroll-behavior-x: none;
+  }
+  @supports (overflow: clip) {
+    html {
+      overflow-x: clip;
+    }
+  }
+
+  body {
+    @apply bg-black text-neutral-200;
+    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: #e5e5e5;
+    color: #000;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #000;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #333;
+    border: 2px solid #000;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #666;
+  }
+
+  input,
+  textarea {
+    caret-color: #fff;
+  }
+}
+
+@layer components {
+  /* -- typography ---------------------------------------------------- */
+  .font-term {
+    font-family: "VT323", "IBM Plex Mono", ui-monospace, monospace;
+    letter-spacing: 0.02em;
+  }
+
+  .glow {
+    /* em-based, not px: a fixed 4px/18px shadow smears small ASCII glyphs
+       into blobs (the "broken M" on phones) - proportional blur stays crisp
+       at every font size while looking identical at the old ~20px sizes */
+    text-shadow:
+      0 0 0.2em rgba(255, 255, 255, 0.5),
+      0 0 0.9em rgba(255, 255, 255, 0.18);
+  }
+
+  .glow-soft {
+    text-shadow: 0 0 0.4em rgba(255, 255, 255, 0.25);
+  }
+
+  /* horizontal scroll strip with an invisible scrollbar (topbar nav) */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .dim {
+    color: #8a8a8a;
+  }
+  .dimmer {
+    color: #565656;
+  }
+
+  /* -- CRT overlay (scanlines + vignette; no flicker - see Layout) --- */
+  .crt-overlay {
+    pointer-events: none;
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0) 0px,
+      rgba(0, 0, 0, 0) 2px,
+      rgba(0, 0, 0, 0.16) 3px,
+      rgba(0, 0, 0, 0.16) 4px
+    );
+    mix-blend-mode: multiply;
+  }
+  .crt-vignette {
+    pointer-events: none;
+    position: fixed;
+    inset: 0;
+    z-index: 91;
+    background: radial-gradient(
+      ellipse at center,
+      rgba(0, 0, 0, 0) 55%,
+      rgba(0, 0, 0, 0.35) 100%
+    );
+  }
+  /* Scoped scanline texture for the hero wordmark. The global .crt-overlay
+     sits BELOW the lifted hero block (z-93), so the wordmark lost its CRT
+     texture and looked flat. This layer paints the same 4px-period bands
+     directly over the wordmark only - the rest of the page keeps the global
+     overlay. Black bands over the black background are invisible; they only
+     darken the glyph ink, which is exactly the scanline look. */
+  .crt-wordmark {
+    pointer-events: none;
+    position: absolute;
+    /* top -1.2em: the coin tittle rides ~0.7em above the wordmark box and
+       must keep the same scanline texture; the bands are invisible over the
+       black gap above the hero, so the extension paints nothing else */
+    inset: -1.2em 0 0 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0) 0px,
+      rgba(0, 0, 0, 0) 3px,
+      rgba(0, 0, 0, 0.22) 3px,
+      rgba(0, 0, 0, 0.22) 4px
+    );
+  }
+
+  /* -- the wordmark coin (the I's tittle) -------------------------------
+     Placement lives on .wqd-coin via ch/em + margins - never transform,
+     because the flip owns transform on .wqd-coin-spin. The glow mirrors
+     .glow but as drop-shadow (text-shadow does not paint SVG shapes). The
+     filter wraps the animating layer, so it re-rasters during the flip -
+     0.9s every 13s on one ~45px element: negligible by design. */
+  .wqd-coin {
+    position: absolute;
+    display: block;
+    pointer-events: none;
+    perspective: 8em; /* subtle 3D depth for the flip, nothing showy */
+    filter: drop-shadow(0 0 0.2em rgba(255, 255, 255, 0.5))
+      drop-shadow(0 0 0.9em rgba(255, 255, 255, 0.18));
+  }
+  .wqd-coin--dim {
+    color: #a3a3a3; /* neutral-400, same ink as the unmined wordmark tail */
+    filter: none;
+  }
+  .wqd-coin-spin {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+  }
+  .wqd-coin-face {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+  }
+  .wqd-coin-back {
+    transform: rotateY(180deg);
+  }
+  /* One 0.9s flip every 13s ("arada bir donsun") - transform-only keyframe,
+     runs on the compositor thread: no layout, no paint, no timer, no JS.
+     Reduced motion removes the animation entirely (static coin). */
+  @media (prefers-reduced-motion: no-preference) {
+    .wqd-coin-spin {
+      animation: wqd-coin-flip 13s cubic-bezier(0.45, 0.05, 0.35, 1) infinite;
+    }
+  }
+  @keyframes wqd-coin-flip {
+    0% {
+      transform: rotateY(0deg);
+    }
+    7% {
+      transform: rotateY(360deg);
+    }
+    100% {
+      transform: rotateY(360deg);
+    }
+  }
+
+  /* -- the standalone brand coin (transfer popups) ----------------------
+     Same two-face 3D construction as the wordmark tittle (.wqd-coin-spin /
+     .wqd-coin-face are reused), but placed in normal flow and flipping on
+     the money-popup cadence: ONE 0.9s flip every 3s, then the coin rests.
+     Transform-only keyframes on the compositor thread - no layout, no
+     paint, no JS timers - so even a full stack of popups costs nothing
+     between flips. Reduced motion removes the animation entirely. */
+  .wqd-brandcoin {
+    position: relative;
+    display: inline-block;
+    flex: none;
+    width: 2em;
+    height: 2em;
+    perspective: 8em;
+    filter: drop-shadow(0 0 0.15em rgba(255, 255, 255, 0.5))
+      drop-shadow(0 0 0.6em rgba(255, 255, 255, 0.18));
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .wqd-brandcoin .wqd-coin-spin {
+      animation: wqd-coin-flip-3s 3s cubic-bezier(0.45, 0.05, 0.35, 1) infinite;
+    }
+  }
+  @keyframes wqd-coin-flip-3s {
+    0% {
+      transform: rotateY(0deg);
+    }
+    30% {
+      transform: rotateY(360deg);
+    }
+    100% {
+      transform: rotateY(360deg);
+    }
+  }
+
+  /* Transfer popup windows: a short rise-and-settle entrance. Transform
+     + opacity only (compositor thread, no layout/paint), and skipped
+     entirely for reduced-motion users - the window simply appears. */
+  @media (prefers-reduced-motion: no-preference) {
+    .wqd-toast-in {
+      animation: wqd-toast-in 0.18s ease-out both;
+    }
+  }
+  @keyframes wqd-toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(0.75rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* -- terminal widgets ---------------------------------------------- */
+  .term-panel {
+    @apply border border-neutral-700 bg-black/60;
+  }
+
+  .term-panel-title {
+    @apply inline-block bg-neutral-200 px-2 py-0 text-black font-semibold uppercase;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+  }
+
+  .term-btn {
+    @apply inline-block border border-neutral-400 bg-black px-4 py-1.5 uppercase text-neutral-200 transition-none;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+  }
+  .term-btn:hover {
+    @apply bg-neutral-200 text-black;
+  }
+  .term-btn:active {
+    @apply bg-neutral-400 text-black;
+  }
+  .term-btn[disabled] {
+    @apply border-neutral-700 text-neutral-600;
+    pointer-events: none;
+  }
+
+  .term-btn-primary {
+    @apply bg-neutral-200 text-black font-bold;
+  }
+  .term-btn-primary:hover {
+    @apply bg-white text-black;
+    box-shadow: 0 0 18px rgba(255, 255, 255, 0.35);
+  }
+
+  .term-input {
+    @apply w-full border border-neutral-700 bg-black px-3 py-2 text-neutral-200 outline-none placeholder:text-neutral-600;
+  }
+  .term-input:focus {
+    @apply border-neutral-300;
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.15);
+  }
+
+  .term-table th {
+    @apply border-b border-neutral-600 px-2 py-1 text-left font-semibold uppercase text-neutral-400;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+  }
+  .term-table td {
+    @apply border-b border-neutral-800/70 px-2 py-1 align-top;
+  }
+  .term-table tr:hover td {
+    @apply bg-neutral-900/70;
+  }
+
+  .blink {
+    animation: crt-blink 1.06s steps(1) infinite;
+  }
+
+  /* one quick pulse when a new notification lands - no infinite flashing */
+  @keyframes badge-pop {
+    0% {
+      transform: scale(0.6);
+    }
+    55% {
+      transform: scale(1.3);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .badge-pop {
+      animation: badge-pop 0.5s ease-out;
+    }
+  }
+
+  .ascii {
+    /* Noto first: it carries the box-drawing/block glyphs the Plex subset
+       lacks - one font for the whole wordmark, on every browser */
+    font-family: "Noto Sans Mono", "IBM Plex Mono", ui-monospace, monospace;
+    white-space: pre;
+    line-height: 1.12;
+  }
+
+  .link-term {
+    @apply underline decoration-dotted underline-offset-4 hover:bg-neutral-200 hover:text-black hover:no-underline;
+  }
+}
+
+/* =======================================================================
+   ALL-DEVICE LAYER - phones, tablets, desktops, TVs.
+   ======================================================================= */
+
+/* Keyboard / TV d-pad navigation: every focused element gets a hard outline. */
+@layer base {
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px dashed #e5e5e5;
+    outline-offset: 2px;
+  }
+}
+
+:root {
+  /* iOS standalone (apple-mobile-web-app-status-bar-style: black-translucent)
+     lets the OS status bar overlay the page's top edge, so EVERY top-anchored
+     element must clear env(safe-area-inset-top) - including ABSOLUTE ones,
+     whose offsets ignore the header's safe-area padding (the bell bug).
+     Exposed as a custom property so it can be added into calc() offsets -
+     and so e2e can simulate the inset (Chromium's env() is always 0). */
+  --sat: env(safe-area-inset-top);
+}
+
+/* iPhone notch & co - keep the shell clear of rounded corners and home bars.
+   Unlayered on purpose: must beat the padding utilities on header/footer. */
+header,
+footer {
+  padding-left: max(env(safe-area-inset-left), 0.75rem);
+  padding-right: max(env(safe-area-inset-right), 0.75rem);
+}
+footer {
+  padding-bottom: max(env(safe-area-inset-bottom), 0.75rem);
+}
+
+/* Touch devices: real 44px targets, no sticky hover states, no iOS input zoom. */
+@media (pointer: coarse) {
+  .term-btn,
+  nav a,
+  .link-term {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .link-term {
+    display: inline; /* links stay inline in prose, padding grows instead */
+    padding: 10px 4px;
+  }
+  input.term-input,
+  select.term-input,
+  textarea.term-input {
+    font-size: 16px; /* below 16px iOS force-zooms the viewport on focus */
+  }
+}
+
+/* Hover effects only where hover actually exists (kills tap-stuck states). */
+@media (hover: none) {
+  .term-btn:hover {
+    background-color: #000;
+    color: #e5e5e5;
+  }
+  .term-btn-primary:hover {
+    background-color: #e5e5e5;
+    color: #000;
+    box-shadow: none;
+  }
+  .term-table tr:hover td {
+    background: transparent;
+  }
+}
+
+/* Smart TV & large desktop walls: scale the whole UI from the root. */
+@media (min-width: 1920px) {
+  html {
+    font-size: 18px;
+  }
+}
+@media (min-width: 2560px) {
+  html {
+    font-size: 21px;
+  }
+}
+
+/* Respect reduced-motion: kill blinking cursors and the scanner sweep. */
+@media (prefers-reduced-motion: reduce) {
+  .blink,
+  .scanline {
+    animation: none !important;
+  }
+}
+
+@keyframes crt-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes boot-line {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* QR scanner viewfinder sweep - percentage of the scanner box, any size */
+.scanline {
+  animation: qr-scanline 1.8s ease-in-out infinite alternate;
+}
+
+@keyframes qr-scanline {
+  from {
+    top: 15%;
+  }
+  to {
+    top: calc(85% - 1px);
+  }
+}

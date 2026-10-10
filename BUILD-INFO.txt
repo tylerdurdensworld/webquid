@@ -1,0 +1,4 @@
+WEBQUID SOURCE SNAPSHOT
+built_at_utc: 2026-10-08T12:17:09Z
+version: 0.0.0
+chain: webquid-mainnet-1
